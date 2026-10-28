@@ -2564,16 +2564,20 @@ const topicQuestions = {
 
 // 52: Home & Accommodation
   52: [
-    {
+{
       q: "Do you live in an apartment or a house / What kinds of accommodation do you live in?",
-      sample: "I live in a modern, well-ventilated house located in a peaceful residential area. It offers a <mark class=\"bg-yellow-200 text-yellow-900 px-1 rounded font-bold\">spacious structural layout</mark> and plenty of natural light, which provides an ideal sanctuary to <mark class=\"bg-yellow-200 text-yellow-900 px-1 rounded font-bold\">unwind after a demanding workday</mark>.",
-      trans: "Tôi sống trong một ngôi nhà hiện đại, thông thoáng nằm ở một khu dân cư yên bình. Nó cung cấp bố cục cấu trúc rộng rãi và nhiều ánh sáng tự nhiên, cung cấp một nơi trú ẩn lý tưởng để thư giãn sau một ngày làm việc mệt mỏi.",
+      sample: "I live in a modern, <mark class=\"bg-yellow-200 text-yellow-900 px-1 rounded font-bold\">well-ventilated</mark> house located in a peaceful <mark class=\"bg-yellow-200 text-yellow-900 px-1 rounded font-bold\">residential area</mark>. It offers a <mark class=\"bg-yellow-200 text-yellow-900 px-1 rounded font-bold\">spacious</mark> structural <mark class=\"bg-yellow-200 text-yellow-900 px-1 rounded font-bold\">layout</mark> and plenty of natural light, which provides <mark class=\"bg-yellow-200 text-yellow-900 px-1 rounded font-bold\">an ideal sanctuary</mark> to <mark class=\"bg-yellow-200 text-yellow-900 px-1 rounded font-bold\">unwind</mark> after <mark class=\"bg-yellow-200 text-yellow-900 px-1 rounded font-bold\">a demanding workday</mark>.",
+      trans: "Tôi sống trong một ngôi nhà hiện đại, thông thoáng nằm ở một khu dân cư yên bình. Nó cung cấp bố cục cấu trúc rộng rãi và nhiều ánh sáng tự nhiên, mang lại một nơi trú ẩn lý tưởng để thư giãn sau một ngày làm việc mệt mỏi.",
       vocab: [
-        { en: "spacious structural layout", ipa: "/ˈspeɪ.shəs ˈstrʌk.tʃɚ.əl ˈleɪ.aʊt/", vn: "bố cục kết cấu rộng rãi" },
-        { en: "unwind after a demanding workday", ipa: "/ʌnˈwaɪnd ˈæf.tɚ ə dɪˈmɑːn.dɪŋ ˈwɝːk.deɪ/", vn: "thư giãn sau một ngày làm việc vất vả" }
+        { en: "well-ventilated", ipa: "/ˌwel ˈven.t̬əl.eɪ.t̬ɪd/", vn: "thông thoáng, thoáng khí" },
+        { en: "residential area", ipa: "/ˌrez.əˈden.ʃəl ˈer.i.ə/", vn: "khu dân cư" },
+        { en: "spacious", ipa: "/ˈspeɪ.ʃəs/", vn: "rộng rãi" },
+        { en: "layout", ipa: "/ˈleɪ.aʊt/", vn: "bố cục, sơ đồ thiết kế" },
+        { en: "an ideal sanctuary", ipa: "/ən aɪˈdiː.əl ˈsæŋk.tʃu.er.i/", vn: "một nơi trú ẩn lý tưởng" },
+        { en: "unwind", ipa: "/ʌnˈwaɪnd/", vn: "thư giãn, xả stress" },
+        { en: "a demanding workday", ipa: "/ə dɪˈmæn.dɪŋ ˈwɝːk.deɪ/", vn: "một ngày làm việc vất vả / áp lực" }
       ]
-    },
-    
+    },    
     {
       q: "Can you describe the place where you live / Please describe the room you live in.",
       sample: "My living space is designed with a minimalist aesthetic, featuring neutral color palettes, wooden furniture, and large windows that <mark class=\"bg-yellow-200 text-yellow-900 px-1 rounded font-bold\">flood the rooms with natural light</mark>. It exudes a <mark class=\"bg-yellow-200 text-yellow-900 px-1 rounded font-bold\">serene and orderly ambience</mark> that promotes deep focus and relaxation.",
@@ -2989,17 +2993,54 @@ function renderQuestions() {
 }
 
 function toggleQuestionBody(qIdx) {
+  // 1. Lấy tổng số lượng câu hỏi hiện đang hiển thị trong topic
+  const totalQuestions = topicQuestions[currentTopicId] ? topicQuestions[currentTopicId].length : 0;
+
+  // 2. Đóng tất cả các câu hỏi khác và thu gọn lại
+  for (let i = 0; i < totalQuestions; i++) {
+    const otherBody = document.getElementById(`qBody-${i}`);
+    const otherChevron = document.getElementById(`qChevron-${i}`);
+    
+    if (otherBody && i !== qIdx) {
+      otherBody.classList.add("hidden");
+    }
+    if (otherChevron && i !== qIdx) {
+      otherChevron.classList.remove("rotate-180");
+    }
+  }
+
+  // 3. Xử lý Mở / Đóng đúng câu hỏi vừa click
   const qBody = document.getElementById(`qBody-${qIdx}`);
   const qChevron = document.getElementById(`qChevron-${qIdx}`);
-  if (qBody.classList.contains("hidden")) {
-    qBody.classList.remove("hidden");
-    qChevron.classList.add("rotate-180");
-  } else {
-    qBody.classList.add("hidden");
-    qChevron.classList.remove("rotate-180");
+  
+  if (qBody && qChevron) {
+    const isOpening = qBody.classList.contains("hidden");
+
+    if (isOpening) {
+      qBody.classList.remove("hidden");
+      qChevron.classList.add("rotate-180");
+
+      // 4. Đợi giao diện hoàn tất việc co/dãn khung rồi mới cuộn đến đầu câu hỏi
+      setTimeout(() => {
+        const qCard = qBody.parentElement; // Khung chứa thẻ câu hỏi
+        const offsetHeader = 20; // Khoảng cách chừa lề trên cùng (pixel)
+        
+        // Tính vị trí Y chuẩn của đầu câu hỏi trên trang
+        const elementPosition = qCard.getBoundingClientRect().top + window.pageYOffset;
+        const offsetPosition = elementPosition - offsetHeader;
+
+        // Cuộn màn hình đến chính xác đầu câu hỏi
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        });
+      }, 150);
+    } else {
+      qBody.classList.add("hidden");
+      qChevron.classList.remove("rotate-180");
+    }
   }
 }
-
 /*************************************************************
  * VOCABULARY UTILITIES & TOGGLES
  *************************************************************/
